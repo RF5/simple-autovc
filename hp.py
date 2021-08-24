@@ -1,7 +1,7 @@
 
 class hp:
 
-    data_root = '/home/baas/data-hdd/datasets/vctk'
+    data_root = '../../datasets/vctk'
     n_train_speakers = 100
     n_test_speakers = 10 # these are the zero-shot speakers
 
