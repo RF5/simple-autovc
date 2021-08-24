@@ -28,7 +28,11 @@ def train(args):
 
     device = torch.device(hp.device)
 
-    ds_root = Path(hp.data_root)/'wav48_silence_trimmed' if args.mel_path is None else Path(args.mel_path)
+    if args.mel_path is None:
+        ds_root = Path(hp.data_root)/'wav48_silence_trimmed' 
+    else:
+        print("[DATA] Using precomputed mels from ", args.mel_path)
+        ds_root = Path(args.mel_path)
     spk_folders = sorted(list(ds_root.iterdir()))
     print(f"[DATA] Found a total of {len(spk_folders)} speakers")
 

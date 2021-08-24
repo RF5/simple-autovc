@@ -57,7 +57,7 @@ def get_loader(files, spk_embs, len_crop, batch_size=16,
                                   batch_size=batch_size,
                                   shuffle=shuffle,
                                   num_workers=num_workers,
-                                  drop_last=False, pin_memory=False)
+                                  drop_last=shuffle, pin_memory=shuffle) # set pin memory to True if training.
     return data_loader
 
 
