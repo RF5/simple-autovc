@@ -1,2 +1,5 @@
 sse_embeddings/
 *.sh
+outputs/
+hifigan_checkpoints/
+**/__pycache__/

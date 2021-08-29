@@ -35,7 +35,7 @@ def train(args):
         ds_root = Path(args.mel_path)
     spk_folders = sorted(list(ds_root.iterdir()))
     print(f"[DATA] Found a total of {len(spk_folders)} speakers")
-
+    # Gather training / testing paths.
     random.seed(hp.seed)
     train_spk_folders = sorted(random.sample(spk_folders, k=hp.n_train_speakers))
     test_spk_folders = sorted(list(set(spk_folders) - set(train_spk_folders)))
@@ -79,6 +79,23 @@ def train(args):
 
     del sse
     torch.cuda.empty_cache()
+
+    # Patch in LJSpeech:
+    if args.lj_path is not None:
+        print("[DATA] Adding LJSpeech")
+        ljpath = Path(args.lj_path)
+        split_folder = [v for v in ljpath.iterdir() if v.is_dir() and 'split' in v.stem]
+        if len(split_folder) != 1: raise AssertionError("Split folder not found.")
+        split_folder = split_folder[0]
+        with open(split_folder/'train.txt', 'r') as f: lj_trn_files = f.readlines()
+        with open(split_folder/'validation.txt', 'r') as f: lj_eval_files = f.readlines()
+
+        lj_trn_files = [ljpath/f"{f.strip()}.wav" for f in lj_trn_files]
+        lj_eval_files = [ljpath/f"{f.strip()}.wav" for f in lj_eval_files]
+        lj_emb = torch.load(ljpath/'lj_sse_emb100.pt').cpu()
+        spk_embs['wavs'] = lj_emb # cheeky hack to make it work nicely with VCTK loader
+        train_files += lj_trn_files
+        test_files += lj_eval_files
 
     print("[DATA] Constructing final dataloaders")
     train_dl = get_loader(train_files, spk_embs, hp.len_crop, hp.bs, 
@@ -228,6 +245,8 @@ if __name__ == '__main__':
                         help='use fp16 in training')
     parser.add_argument('--mel_path', required=False, default=None, action='store',
                         help='path to precomputed spectrograms. Compute them on the fly if not.')
+    parser.add_argument('--lj_path', required=False, default=None,
+                        help="Add LJSpeech dataset")
 
     args = parser.parse_args()
     train(args)
