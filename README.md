@@ -90,6 +90,12 @@ sf.write('converted_uttr.flac', converted_waveform.cpu().numpy(), 16000)
 
 Doing this for the example utterance in the `example/` folder yields the following:
 
+1. Source utterance: https://user-images.githubusercontent.com/23717819/131484933-4f70eb43-452a-44a7-8569-a83da745241f.mp4
+2. Reference style utterance: https://user-images.githubusercontent.com/23717819/131485048-c9ec4283-7c3f-459c-ad52-0f0cb90eb02e.mp4
+3. Converted output utterance: https://user-images.githubusercontent.com/23717819/131485109-06616224-cf2c-41ee-ab8a-8c1caba27d13.mp4
+
+Note as well that the input or reference utterance may be speakers unseen during training, or any audio file if you are feeling very brave.
+
 # Training
 
 ## AutoVC
