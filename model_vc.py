@@ -1,3 +1,5 @@
+""" AutoVC model retrieved from the official source code repo https://github.com/auspicious3000/autovc """
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

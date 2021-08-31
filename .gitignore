@@ -1,4 +1,5 @@
 sse_embeddings/
+dev-clean-sse-embs/
 *.sh
 outputs/
 hifigan_checkpoints/

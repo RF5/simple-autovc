@@ -11,6 +11,14 @@ import torch
 import librosa
 import argparse
 from hp import hp
+import math
+
+def pad_seq(x, base=32):
+    len_out = int(base * math.ceil(float(x.shape[0])/base))
+    len_pad = len_out - x.shape[0]
+    assert len_pad >= 0
+    return torch.nn.functional.pad(x, (0,0,0,len_pad), value=0), len_pad
+
 
 def butter_highpass(cutoff, fs, order=5):
     nyq = 0.5 * fs
@@ -28,16 +36,16 @@ def pySTFT(x, fft_length=1024, hop_length=256):
     result = np.fft.rfft(fft_window * result, n=fft_length).T
     return np.abs(result)
 
-mel_basis = mel(16000, 1024, fmin=90, fmax=7600, n_mels=80).T # For wavenet vocoder
-mel_basis_hifi = mel(16000, 1024, fmin=0, fmax=8000, n_mels=80).T
+mel_basis = mel(hp.sampling_rate, 1024, fmin=90, fmax=7600, n_mels=80).T # For wavenet vocoder
+mel_basis_hifi = mel(hp.sampling_rate, 1024, fmin=0, fmax=8000, n_mels=80).T
 min_level = np.exp(-100 / 20 * np.log(10))
-b, a = butter_highpass(30, 16000, order=5)
+b, a = butter_highpass(30, hp.sampling_rate, order=5)
 
-def get_mspec(fn, is_hifigan=True):
+def get_mspec(fn, is_hifigan=True, return_waveform=False):
     # Read audio file
     x, fs = sf.read(str(fn))
     #print(x.dtype, x.shape, fs)
-    x = librosa.resample(x, fs, 16000)
+    x = librosa.resample(x, fs, hp.sampling_rate)
     # Remove drifting noise
     y = signal.filtfilt(b, a, x)
     # Ddd a little random noise for model roubstness
@@ -54,6 +62,32 @@ def get_mspec(fn, is_hifigan=True):
         D_db = 20 * np.log10(np.maximum(min_level, D_mel)) - 16
         S = np.clip((D_db + 100) / 100, 0, 1) # y = (x + 100) / 100
         S = S.astype(np.float32)
+
+    if return_waveform: return torch.from_numpy(S), y
+    return torch.from_numpy(S)
+
+def get_mspec_from_array(x, input_sr, is_hifigan=True, return_waveform=False):
+    """ `x` must be a 1D numpy array corresponding to a waveform"""
+    #print(x.dtype, x.shape, fs)
+    x = librosa.resample(x, input_sr, hp.sampling_rate)
+    # Remove drifting noise
+    y = signal.filtfilt(b, a, x)
+    # Ddd a little random noise for model roubstness
+    wav = y * 0.96 + (np.random.RandomState().rand(y.shape[0])-0.5)*1e-06
+    # Compute spect
+    D = pySTFT(wav).T
+    # Convert to mel and normalize
+    #print(D.shape)
+    if is_hifigan:
+        D_mel = np.dot(D, mel_basis_hifi)
+        S = np.log(np.clip(D_mel, 1e-5, float('inf'))).astype(np.float32)
+    else:
+        D_mel = np.dot(D, mel_basis)
+        D_db = 20 * np.log10(np.maximum(min_level, D_mel)) - 16
+        S = np.clip((D_db + 100) / 100, 0, 1) # y = (x + 100) / 100
+        S = S.astype(np.float32)
+
+    if return_waveform: return torch.from_numpy(S), y
     return torch.from_numpy(S)
 
 if __name__ == '__main__':
