@@ -3,10 +3,7 @@ from model_vc import Generator
 import torch
 from hp import hp
 from spec_utils import get_mspec, get_mspec_from_array, pad_seq
-
-from hifigan.models import Generator as HiFiGenerator
-from hifigan.env import AttrDict
-import json
+from pathlib import Path
 
 class AutoVC(Generator):
 
@@ -52,8 +49,8 @@ def autovc(pretrained=True, progress=True, normalize=True, **kwargs):
     """
     model = AutoVC(normalize=normalize, **kwargs)
     if pretrained:
-        # state = torch.hub.load_state_dict_from_url("https://github.com/RF5/simple-speaker-embedding/releases/download/0.1/gru-wrapped-f1f850.pth", 
-                                                # progress=progress)
+        state = torch.hub.load_state_dict_from_url("https://github.com/RF5/simple-autovc/releases/download/stable/checkpoint_noopt.pth", 
+                                                progress=progress)
         state = torch.load('outputs/run7/checkpoint_noopt.pth')['model_state_dict']
         model.load_state_dict(state)
 
@@ -68,9 +65,12 @@ def hifigan(pretrained=True, progress=True, **kwargs):
         kwargs: arguments passed to the spectrogram transform
     """
     if pretrained:
-        # state = torch.hub.load_state_dict_from_url("https://github.com/RF5/simple-speaker-embedding/releases/download/0.1/gru-wrapped-f1f850.pth", 
-        #                                         progress=progress)
-        importer = torch.package.PackageImporter("hifigan_checkpoints/packaged_hifigan.pt")
+        svpath = Path(torch.hub.get_dir() + '/simple-autovc-hifigan.pt')
+        if not svpath.is_file():
+            torch.hub.download_url_to_file("https://github.com/RF5/simple-autovc/releases/download/stable/packaged_hifigan.pt",
+                                            svpath)
+
+        importer = torch.package.PackageImporter(svpath)
         vocoder = importer.load_pickle("models", "hifigan.pkl")
     if not pretrained:
         raise NotImplementedError("HiFiGAN pretrained model saved as torch package. Please use original hifigan repo to train new hifigan from scratch.")
