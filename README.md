@@ -90,15 +90,26 @@ sf.write('converted_uttr.flac', converted_waveform.cpu().numpy(), 16000)
 
 Doing this for the example utterance in the `example/` folder yields the following:
 
-1. Source utterance: 
+1. Source utterance:
+1.1 raw 48kHz:
 
 https://user-images.githubusercontent.com/23717819/131484933-4f70eb43-452a-44a7-8569-a83da745241f.mp4
 
+1.2 vocoded 16kHz:
+
+https://user-images.githubusercontent.com/23717819/131485889-ecfc0a56-6ccd-4a28-b56d-b0285677c8ad.mp4
+
 2. Reference style utterance: 
+
+2.1 raw 48kHz:
 
 https://user-images.githubusercontent.com/23717819/131485048-c9ec4283-7c3f-459c-ad52-0f0cb90eb02e.mp4
 
-3. Converted output utterance: 
+2.2 vocoded 16kHz:
+
+https://user-images.githubusercontent.com/23717819/131485960-cee191e5-56e5-403e-a0fb-00da53fc95d3.mp4
+
+3. Converted output utterance (vocoded 16kHz): 
 
 https://user-images.githubusercontent.com/23717819/131485109-06616224-cf2c-41ee-ab8a-8c1caba27d13.mp4
 
