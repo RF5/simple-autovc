@@ -29,10 +29,10 @@ import torch
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Load the pretrained autovc model:
-autovc = torch.hub.load('TODO', 'autovc').to(device)
+autovc = torch.hub.load('RF5/simple-autovc', 'autovc').to(device)
 autovc.eval()
 # Load the pretrained hifigan model:
-hifigan = torch.hub.load('TODO', 'hifigan').to(device)
+hifigan = torch.hub.load('RF5/simple-autovc', 'hifigan').to(device)
 hifigan.eval()
 # Load speaker embedding model:
 sse = torch.hub.load('RF5/simple-speaker-embedding', 'gru_embedder').to(device)
