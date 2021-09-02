@@ -68,7 +68,7 @@ def hifigan(pretrained=True, progress=True, **kwargs):
         svpath = Path(torch.hub.get_dir() + '/simple-autovc-hifigan.pt')
         if not svpath.is_file():
             torch.hub.download_url_to_file("https://github.com/RF5/simple-autovc/releases/download/stable/packaged_hifigan.pt",
-                                            svpath)
+                                            svpath, progress=progress)
 
         importer = torch.package.PackageImporter(svpath)
         vocoder = importer.load_pickle("models", "hifigan.pkl")
