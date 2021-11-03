@@ -50,18 +50,18 @@ mel = autovc.mspec_from_file('example/source_uttr.flac')
 # Get embedding for source speaker
 sse_src_mel = sse.melspec_from_file('example/source_uttr.flac')
 with torch.no_grad(): 
-    src_embedding = model(sse_src_mel[None].to(device))
+    src_embedding = sse(sse_src_mel[None].to(device))
 # Get embedding for target speaker
 sse_trg_mel = sse.melspec_from_file('example/target_uttr.flac')
 with torch.no_grad(): 
-    trg_embedding = model(sse_trg_mel[None].to(device))
+    trg_embedding = sse(sse_trg_mel[None].to(device))
 
 # Do the actual voice conversion!
 with torch.no_grad():
     spec_padded, len_pad = autovc.pad_mspec(mel)
     x_src = spec_padded.to(device)[None]
-    s_src = sse_src_mel.to(device)
-    s_trg = sse_trg_mel.to(device)
+    s_src = src_embedding.to(device)
+    s_trg = trg_embedding.to(device)
     x_identic, x_identic_psnt, _ = autovc(x_src, s_src, s_trg)
     if len_pad == 0: x_trg = x_identic_psnt[0, 0, :, :]
     else: x_trg = x_identic_psnt[0, 0, :-len_pad, :]
