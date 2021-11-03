@@ -51,7 +51,6 @@ def autovc(pretrained=True, progress=True, normalize=True, **kwargs):
     if pretrained:
         state = torch.hub.load_state_dict_from_url("https://github.com/RF5/simple-autovc/releases/download/stable/checkpoint_noopt.pth", 
                                                 progress=progress)
-        state = torch.load('outputs/run7/checkpoint_noopt.pth')['model_state_dict']
         model.load_state_dict(state)
 
     return model
