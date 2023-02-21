@@ -16,12 +16,26 @@ class AutoVCDataset(data.Dataset):
         self.len_crop = len_crop
         # assert jitter % 32 == 0, "Jitter must be divisible by 32"
         # self.jitter_choices = list(range(0, jitter+1, 32))
+
+        # Replacements for lambda function to fix AttributeError
+        global norm_mel
+        def norm_mel(x):
+            return (x + shift) / scale
+        global denorm_mel
+        def denorm_mel(x):
+            return (x * scale) - shift
+        global identity
+        def identity(x):
+            return x
+
         if scale is not None and shift is not None:
-            self.norm_mel = lambda x: (x + shift) / scale
-            self.denorm_mel = lambda x: (x*scale) - shift
+            self.norm_mel = norm_mel
+            self.denorm_mel = denorm_mel
         else:
-            self.norm_mel = lambda x: x
-            self.denorm_mel = lambda x: x
+            self.norm_mel = identity
+            self.denorm_mel = identity
+        
+        
 
     def __len__(self) -> int:
         return len(self.paths)
@@ -37,6 +51,7 @@ class AutoVCDataset(data.Dataset):
         return mspec, spk_emb
 
     def random_crop(self, mspec):
+        #cprint(mspec.shape) 
         N, _ = mspec.shape
         clen = self.len_crop
         if N < clen:
@@ -49,9 +64,8 @@ class AutoVCDataset(data.Dataset):
         return mspec
 
 def get_loader(files, spk_embs, len_crop, batch_size=16, 
-                num_workers=8, shuffle=False, scale=None, shift=None):
+                num_workers=0, shuffle=False, scale=None, shift=None):
     """Build and return a data loader."""
-    
     dataset = AutoVCDataset(files, spk_embs, len_crop, scale=scale, shift=shift)
     data_loader = data.DataLoader(dataset=dataset,
                                   batch_size=batch_size,

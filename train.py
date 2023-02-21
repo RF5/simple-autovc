@@ -24,17 +24,25 @@ from model_vc import Generator
 def train(args):
     print("[BACKEND] Setting up paths and training.")
     out_path = Path(hp.output_path)
-    os.makedirs(out_path, exist_ok=True)
+    os.makedirs(out_path, exist_ok=True) # Make output directory
 
     device = torch.device(hp.device)
 
+    # For now, no precomputed spectrograms
     if args.mel_path is None:
-        ds_root = Path(hp.data_root)/'wav48_silence_trimmed' 
+        ds_root = Path(hp.data_root)
     else:
         print("[DATA] Using precomputed mels from ", args.mel_path)
         ds_root = Path(args.mel_path)
-    spk_folders = sorted(list(ds_root.iterdir()))
+
+    # Get speaker folders (only directories with numeric names)
+    spk_folders = []
+    for path in sorted(list(ds_root.iterdir())):
+        if path.is_dir():
+            if path.parts[-1].isnumeric():
+                spk_folders.append(path)
     print(f"[DATA] Found a total of {len(spk_folders)} speakers")
+
     # Gather training / testing paths.
     random.seed(hp.seed)
     train_spk_folders = sorted(random.sample(spk_folders, k=hp.n_train_speakers))
@@ -50,12 +58,12 @@ def train(args):
     sse = torch.hub.load('RF5/simple-speaker-embedding', 'gru_embedder').to(device)
     sse.eval()
 
-    mb = master_bar(spk_folders)
+    # mb = master_bar(spk_folders)
     spk_out_path = Path(hp.speaker_embedding_dir)
     spk_embs = {}
     os.makedirs(spk_out_path, exist_ok=True)
     print("[SPEAKER EMBEDDING] Gathering speaker embeddings")
-    for spk_folder in mb:
+    for spk_folder in spk_folders:
         random.seed(hp.seed)
         sample_uttrs = random.sample(list(spk_folder.iterdir()), k=hp.n_uttr_per_spk_embedding)
         embs = []
@@ -63,8 +71,8 @@ def train(args):
             spk_embs[spk_folder.stem] = torch.load(spk_out_path/f"{spk_folder.stem}_sse_emb.pt")
             continue
 
-        for i, uttr_pth in progress_bar(enumerate(sample_uttrs), total=len(sample_uttrs), parent=mb):
-            mb.child.comment = f"processing speaker {spk_folder.stem} ({i} of {len(sample_uttrs)})"
+        for i, uttr_pth in enumerate(sample_uttrs):
+            # mb.child.comment = f"processing speaker {spk_folder.stem} ({i} of {len(sample_uttrs)})"
             mel = sse.melspec_from_file(uttr_pth).to(device)
             if str(uttr_pth).endswith('.pt'): 
                 raise NotImplementedError(("If spectrograms are not precomputed, please do not use pre-computed mel-spectrograms in args."))
@@ -103,6 +111,10 @@ def train(args):
     test_dl = get_loader(test_files, spk_embs, hp.len_crop, hp.bs, 
                         shuffle=False, shift=hp.mel_shift, scale=hp.mel_scale)
 
+    print(list(train_dl))
+    for i, (x_src, s_src) in enumerate(train_dl):
+        print(i, x_src, s_src)
+
     print("[LOGGING] Setting up logger")
     writer = tensorboard.writer.SummaryWriter(out_path)
     keys = ['G/loss_id','G/loss_id_psnt','G/loss_cd']
@@ -128,12 +140,12 @@ def train(args):
     running_loss = 0.0
     n_epochs = math.ceil(hp.n_iters / len(train_dl))
     iter = 0
-    mb = master_bar(range(n_epochs))
-    for epoch in mb:
+    # mb = master_bar(range(n_epochs))
+    for epoch in range(n_epochs):
 
         G.train()
-        pb = progress_bar(enumerate(train_dl), total=len(train_dl), parent=mb)
-        for i, (x_src, s_src) in pb:
+        # pb = progress_bar(enumerate(train_dl), total=len(train_dl), parent=mb)
+        for i, (x_src, s_src) in enumerate(train_dl):
             x_src = x_src.to(device)
             s_src = s_src.to(device)
             opt.zero_grad()
@@ -175,7 +187,7 @@ def train(args):
             
             # lerp smooth running loss
             running_loss = running_loss + 0.1*(float(g_loss) - running_loss)
-            mb.child.comment = f"loss = {float(running_loss):6.5f}"
+            # mb.child.comment = f"loss = {float(running_loss):6.5f}"
 
             if iter % hp.print_log_interval == 0:
                 et = time.time() - start_time
@@ -183,7 +195,7 @@ def train(args):
                 log = "Elapsed [{}], Iteration [{}/{}]".format(et, iter+1, hp.n_iters)
                 for tag in keys:
                     log += ", {}: {:.4f}".format(tag, loss[tag])
-                mb.write(log)
+                # mb.write(log)
             
             if iter % hp.tb_log_interval == 0:
                 for tag in keys: writer.add_scalar(tag, loss[tag], iter)
@@ -194,12 +206,12 @@ def train(args):
                 print("[TRAIN] Training completed.")
                 break
         
-        mb.write(f"[TRAIN] epoch {epoch} completed. Beginning eval.")
+        # mb.write(f"[TRAIN] epoch {epoch} completed. Beginning eval.")
         G.eval()
-        pb = progress_bar(enumerate(test_dl), total=len(test_dl), parent=mb)
+        # pb = progress_bar(enumerate(test_dl), total=len(test_dl), parent=mb)
         valid_losses = {tag: [] for tag in keys}
         valid_losses['G/loss'] = []
-        for i, (x_src, s_src) in pb:
+        for i, (x_src, s_src) in enumerate(test_dl):
             x_src = x_src.to(device)
             s_src = s_src.to(device)
 
@@ -219,12 +231,12 @@ def train(args):
             valid_losses['G/loss_id_psnt'].append(g_loss_id_psnt.item())
             valid_losses['G/loss_cd'].append(g_loss_cd.item())
             valid_losses['G/loss'].append(g_loss.item())
-            mb.child.comment = f"loss = {float(g_loss):6.5f}"
+            # mb.child.comment = f"loss = {float(g_loss):6.5f}"
         
         valid_losses = {k: np.mean(valid_losses[k]) for k in valid_losses.keys()}
         for tag in valid_losses.keys(): writer.add_scalar('valid/' + tag, valid_losses[tag], iter)
         pst = [f"{k}: {valid_losses[k]:5.4f}" for k in valid_losses.keys()]
-        mb.write(f"[TRAIN] epoch {epoch} eval metrics: " + '\t'.join(pst))
+        # mb.write(f"[TRAIN] epoch {epoch} eval metrics: " + '\t'.join(pst))
 
         if iter >= hp.n_iters: break
     

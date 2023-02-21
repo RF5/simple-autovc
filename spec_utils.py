@@ -44,12 +44,15 @@ b, a = butter_highpass(30, hp.sampling_rate, order=5)
 def get_mspec(fn, is_hifigan=True, return_waveform=False):
     # Read audio file
     x, fs = sf.read(str(fn))
-    #print(x.dtype, x.shape, fs)
+    x = x[:, 0]
+    print(x.dtype, x.shape, fs)
+
     x = librosa.resample(x, fs, hp.sampling_rate)
     # Remove drifting noise
     y = signal.filtfilt(b, a, x)
     # Ddd a little random noise for model roubstness
-    wav = y * 0.96 + (np.random.RandomState().rand(y.shape[0])-0.5)*1e-06
+    print(y.shape)
+    wav = y * 0.96 + (np.random.RandomState().rand(y.shape[0],)-0.5)*1e-06
     # Compute spect
     D = pySTFT(wav).T
     # Convert to mel and normalize

@@ -1,9 +1,9 @@
 
 class hp:
 
-    data_root = '../../datasets/vctk'
-    n_train_speakers = 100
-    n_test_speakers = 10 # these are the zero-shot speakers
+    data_root = '../../data/cleaned'
+    n_train_speakers = 20
+    n_test_speakers = 2 # these are the zero-shot speakers
     sampling_rate = 16000
 
     # speaker embedding settings
@@ -12,7 +12,7 @@ class hp:
 
     # train settings
     output_path = './outputs/run1/'
-    device = 'cuda'
+    device = 'cpu'
     len_crop = 128
     bs = 4 # 2x that of paper
     n_iters = 2300000 # much greater than the 100k in the paper
