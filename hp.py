@@ -24,5 +24,5 @@ class hp:
     lr = 1e-4 # according to github issues, no lr schedule is used
 
     seed = 100
-    mel_shift = 12
-    mel_scale = 12
+    mel_shift = None
+    mel_scale = None

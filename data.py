@@ -64,7 +64,7 @@ class AutoVCDataset(data.Dataset):
         return mspec
 
 def get_loader(files, spk_embs, len_crop, batch_size=16, 
-                num_workers=0, shuffle=False, scale=None, shift=None):
+                num_workers=0, shuffle=False, scale=None, shift=None): # had to change num_workers to 0
     """Build and return a data loader."""
     dataset = AutoVCDataset(files, spk_embs, len_crop, scale=scale, shift=shift)
     data_loader = data.DataLoader(dataset=dataset,

@@ -52,7 +52,7 @@ def get_mspec(fn, is_hifigan=True, return_waveform=False):
     y = signal.filtfilt(b, a, x)
     # Ddd a little random noise for model roubstness
     print(y.shape)
-    wav = y * 0.96 + (np.random.RandomState().rand(y.shape[0],)-0.5)*1e-06
+    wav = y * 0.96 + (np.random.RandomState().rand(y.shape[0])-0.5)*1e-06
     # Compute spect
     D = pySTFT(wav).T
     # Convert to mel and normalize
