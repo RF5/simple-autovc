@@ -70,7 +70,7 @@ def hifigan(pretrained=True, progress=True, **kwargs):
                                             svpath, progress=progress)
 
         importer = torch.package.PackageImporter(svpath)
-        vocoder = importer.load_pickle("models", "hifigan.pkl")
+        vocoder = importer.load_pickle("models", "hifigan.pkl", map_location='cpu')
     if not pretrained:
         raise NotImplementedError("HiFiGAN pretrained model saved as torch package. Please use original hifigan repo to train new hifigan from scratch.")
 
