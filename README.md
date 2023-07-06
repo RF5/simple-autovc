@@ -17,7 +17,7 @@ The 3 model components are as follows:
 - HiFi-GAN vocoder -- using a pretrained model obtained from the [original paper author](https://github.com/auspicious3000).
 
 ## Usage
-To use the pretrained models, no dependancies aside from `pytorch`, `librosa`, `scipy`, and `numpy` are required. 
+To use the pretrained models, no dependancies aside from `pytorch`, `librosa==0.9.2`, `scipy`, and `numpy` are required. 
 The models use [torch hub](https://pytorch.org/docs/stable/hub.html), making loading exceedingly simple:
 
 ### Quickstart
